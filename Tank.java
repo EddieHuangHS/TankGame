@@ -1,10 +1,11 @@
-package chapter16.TankGame02;
+package TankGame04;
 
 public class Tank {
     private int x; // 坦克横坐标
     private int y; // 坦克纵坐标
     private int direction = 0; // 坦克方向 0上 1右 2下 3左
     private int speed = 1;
+    boolean isLive = true;
 
     public Tank(int x, int y) {
         this.x = x;
@@ -12,19 +13,27 @@ public class Tank {
     }
 
     public void moveUp(){
-        y -= speed;
+        if(y > 0 && isLive){
+            y -= speed;
+        }
     }
 
     public void moveRight(){
-        x += speed;
+        if(x + 60 < 1000 && isLive){
+            x += speed;
+        }
     }
 
     public void moveDown(){
-        y += speed;
+        if(y + 60 < 750 && isLive){
+            y += speed;
+        }
     }
 
     public void moveLeft(){
-        x -= speed;
+        if(x > 0 && isLive){
+            x -= speed;
+        }
     }
 
     public int getX() {

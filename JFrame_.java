@@ -1,4 +1,4 @@
-package chapter16.TankGame02;
+package TankGame04;
 
 import javax.swing.*;
 
@@ -12,6 +12,8 @@ public class JFrame_ extends JFrame {
 
     public JFrame_(){
         mp = new MyPanel();
+        Thread thread = new Thread(mp);
+        thread.start();
         this.add(mp); // 把面板加入进框架
         this.addKeyListener(mp); // 让JFrame监听KeyListener事件
         this.setSize(1000, 750);
