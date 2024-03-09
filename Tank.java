@@ -1,4 +1,4 @@
-package TankGame04;
+package TankGame05;
 
 public class Tank {
     private int x; // 坦克横坐标

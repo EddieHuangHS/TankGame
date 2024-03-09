@@ -1,4 +1,4 @@
-package TankGame04;
+package TankGame05;
 
 public class Shot implements Runnable{
     int x; // 子弹 x 坐标
@@ -39,13 +39,13 @@ public class Shot implements Runnable{
                     x -= speed;
                     break;
             }
-            // 测试语句，用来输出当前 x 和 y 的坐标
-            System.out.println("子弹 x=" + x + " y=" + y);
+//            // 测试语句，用来输出当前 x 和 y 的坐标
+//            System.out.println("子弹 x=" + x + " y=" + y);
 
             // 当子弹移动到面板的边界，就应该销毁（把启动的子弹的线程销毁）
             // 当子弹碰到敌人坦克时，也应该结束线程
             if(!(x >= 0 && x <= 1000 && y >= 0 && y<= 750 && isLive)){
-                System.out.println("射击结束");
+//                System.out.println("射击结束");
                 isLive = false;
                 break;
             }

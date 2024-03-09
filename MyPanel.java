@@ -1,20 +1,25 @@
-package TankGame04;
+package TankGame05;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.io.File;
 import java.util.Vector;
 
+@SuppressWarnings({"All"})
 // 为了监听 键盘事件，实现KeyListener
 public class MyPanel extends JPanel implements KeyListener, Runnable {
     // 定义我的坦克
-    Hero hero = null;
+    TankGame05.Hero hero = null;
     // 定义敌人的坦克，放入到Vector，因为Vector是线程安全的集合
     Vector<EnemyTank> enemyTanks = new Vector<>();
+    // 定义一个存放Node，用于恢复敌人坦克的坐标和方向
+    Vector<Node> nodes = new Vector<>();
     // 定义一个Vector，用于存放炸弹
     // 当子弹击中坦克时，加入一个Bomb对象到bombs
-    Vector<Bomb> bombs = new Vector<>();
+    Vector<TankGame05.Bomb> bombs = new Vector<>();
+    // 设置敌人坦克数量
     int enemyTankSize = 3;
 
     // 定义3张炸弹图片，用于显示爆炸效果
@@ -22,30 +27,96 @@ public class MyPanel extends JPanel implements KeyListener, Runnable {
     Image image2 = null;
     Image image3 = null;
 
-    public MyPanel() {
-        hero = new Hero(100, 200); // 初始化自己坦克的坐标
-        hero.setSpeed(5);
-        // 初始化敌人的坦克
-        for (int i = 0; i < enemyTankSize; i++) {
-            // 创建敌人坦克
-            EnemyTank enemyTank = new EnemyTank(100 * (i + 1), 0);
-            // 设置敌人坦克初始方向
-            enemyTank.setDirection(2);
-            // 启动敌人坦克线程
-            new Thread(enemyTank).start();
-            // 给 enemyTank 加入一颗子弹
-            Shot shot = new Shot(enemyTank.getX() + 20, enemyTank.getY() + 60, enemyTank.getDirection());
-            // 加入 enemyTank 的 Vector 成员
-            enemyTank.shots.add(shot);
-            // 启动 shot 对象
-            new Thread(shot).start();
-            // 把敌人坦克加入到敌人坦克的集合里
-            enemyTanks.add(enemyTank);
+    public MyPanel(String key) {
+        // 先判断记录的文件是否存在
+        // 如果存在就正常执行，如果不存在，提示，只能开启新游戏，key = "1"
+        File file = new File(Recorder.getRecordFile());
+        if(file.exists()){
+            nodes = Recorder.getNodesAndEnemyTankRec();
+        }else{
+            System.out.println("文件不存在，开启新游戏");
+            key = "1";
         }
+
+        // 将MyPanel对象的enemyTanks设置给Recorder的enemyTanks
+        Recorder.setEnemyTanks(enemyTanks);
+        hero = new TankGame05.Hero(100, 200); // 初始化自己坦克的坐标
+        hero.setSpeed(5);
+
+        switch (key){
+            case "1": // 开启新游戏
+                // 初始化存储文件
+                Recorder.initialRecord();
+                // 初始化敌人的坦克
+                for (int i = 0; i < enemyTankSize; i++) {
+                    // 创建敌人坦克
+                    EnemyTank enemyTank = new EnemyTank(100 * (i + 1), 0);
+                    // 将enemyTanks设置给enemyTank
+                    enemyTank.setEnemyTanks(enemyTanks);
+                    // 设置敌人坦克初始方向
+                    enemyTank.setDirection(2);
+                    // 启动敌人坦克线程
+                    new Thread(enemyTank).start();
+                    // 给 enemyTank 加入一颗子弹
+                    TankGame05.Shot shot = new TankGame05.Shot(enemyTank.getX() + 20, enemyTank.getY() + 60, enemyTank.getDirection());
+                    // 加入 enemyTank 的 Vector 成员
+                    enemyTank.shots.add(shot);
+                    // 启动 shot 对象
+                    new Thread(shot).start();
+                    // 把敌人坦克加入到敌人坦克的集合里
+                    enemyTanks.add(enemyTank);
+                }
+                break;
+            case "2": // 继续上局游戏
+                // 初始化敌人的坦克
+                for (int i = 0; i < nodes.size(); i++) {
+                    // 从存储列表里得到一个敌人坦克
+                    Node node = nodes.get(i);
+                    // 创建敌人坦克
+                    EnemyTank enemyTank = new EnemyTank(node.getX(), node.getY());
+                    // 将enemyTanks设置给enemyTank
+                    enemyTank.setEnemyTanks(enemyTanks);
+                    // 设置敌人坦克初始方向
+                    enemyTank.setDirection(node.getDirection());
+                    // 启动敌人坦克线程
+                    new Thread(enemyTank).start();
+                    // 给 enemyTank 加入一颗子弹
+                    TankGame05.Shot shot = new TankGame05.Shot(enemyTank.getX() + 20, enemyTank.getY() + 60, enemyTank.getDirection());
+                    // 加入 enemyTank 的 Vector 成员
+                    enemyTank.shots.add(shot);
+                    // 启动 shot 对象
+                    new Thread(shot).start();
+                    // 把敌人坦克加入到敌人坦克的集合里
+                    enemyTanks.add(enemyTank);
+                }
+                break;
+            default:
+                System.out.println("你输入的值有误...");
+        }
+
+
+
         // 初始化图片对象
         image1 = Toolkit.getDefaultToolkit().getImage(MyPanel.class.getResource("/bigBomb.png"));
         image2 = Toolkit.getDefaultToolkit().getImage(MyPanel.class.getResource("/mediumBomb.png"));
         image3 = Toolkit.getDefaultToolkit().getImage(MyPanel.class.getResource("/smallBomb.png"));
+
+        // 这里播放指定的音乐
+        new AePlayWave("src\\111.wav").start();
+    }
+
+    // 编写方法，显示我方击毁敌方坦克的信息
+    public void showInfo(Graphics g){
+        // 画出玩家的总成绩
+        g.setColor(Color.black);
+        Font font = new Font("宋体", Font.BOLD, 25);
+        g.setFont(font);
+
+        g.drawString("您累计击毁敌方坦克", 1020, 30);
+        this.drawTank(1020, 60, g, 0, 0); // 画出一个敌方坦克
+        // 画敌方坦克的时候画笔的颜色改变了
+        g.setColor(Color.BLACK);
+        g.drawString(Recorder.getAllEnemyTankNum() + "", 1080, 100);
     }
 
     @Override
@@ -53,7 +124,7 @@ public class MyPanel extends JPanel implements KeyListener, Runnable {
         super.paint(g);
 
         g.fillRect(0, 0, 1000, 750);
-
+        this.showInfo(g);
         // 画出自己的坦克
         if(hero != null && hero.isLive){
             drawTank(hero.getX(), hero.getY(), g, hero.getDirection(), 1);
@@ -62,7 +133,7 @@ public class MyPanel extends JPanel implements KeyListener, Runnable {
         // 画出 hero 射出的子弹
         // 将hero的子弹集合shots，遍历取出绘制
         for (int i = 0; i < hero.shots.size(); i++) {
-            Shot shot = hero.shots.get(i);
+            TankGame05.Shot shot = hero.shots.get(i);
             if (shot != null && shot.isLive == true) {
                 g.draw3DRect(shot.x, shot.y, 2, 2, false);
             }else{ // 如果该shot对象已经无效，就从shots集合中拿掉
@@ -73,7 +144,7 @@ public class MyPanel extends JPanel implements KeyListener, Runnable {
         // 如果bombs 集合中有对象，就画出
         for (int i = 0; i < bombs.size(); i++) {
             // 取出炸弹
-            Bomb bomb = bombs.get(i);
+            TankGame05.Bomb bomb = bombs.get(i);
 
             // -----------------------
             try {
@@ -108,7 +179,7 @@ public class MyPanel extends JPanel implements KeyListener, Runnable {
                 // 画出 enemyTank 所有子弹
                 for (int j = 0; j < enemyTank.shots.size(); j++) {
                     // 取出子弹
-                    Shot shot = enemyTank.shots.get(j);
+                    TankGame05.Shot shot = enemyTank.shots.get(j);
                     // 绘制
                     if (shot.isLive) {
                         g.draw3DRect(shot.x, shot.y, 2, 2, false);
@@ -183,7 +254,7 @@ public class MyPanel extends JPanel implements KeyListener, Runnable {
     public void hitEnemyTank(){
         // 遍历我们的子弹
         for (int j = 0; j < hero.shots.size(); j++) {
-            Shot shot = hero.shots.get(j);
+            TankGame05.Shot shot = hero.shots.get(j);
             // 判断是否击中了敌人坦克
             if (shot != null && shot.isLive && hero.isLive) { // 当自己的坦克的子弹仍然存活时
                 // 遍历敌人的所有坦克
@@ -203,7 +274,7 @@ public class MyPanel extends JPanel implements KeyListener, Runnable {
             // 遍历enemyTank对象的所有子弹
             for (int j = 0; j < enemyTank.shots.size(); j++) {
                 // 取出子弹
-                Shot shot = enemyTank.shots.get(j);
+                TankGame05.Shot shot = enemyTank.shots.get(j);
                 // 判断shot是否击中了我的坦克
                 if(hero.isLive && shot.isLive && enemyTank.isLive){
                     hitTank(shot, hero);
@@ -212,26 +283,42 @@ public class MyPanel extends JPanel implements KeyListener, Runnable {
         }
     }
 
-    public void hitTank(Shot s, Tank enemyTank) {
+    public void hitTank(TankGame05.Shot s, Tank enemyTank) {
         // 判断 s 是否击中坦克
         switch (enemyTank.getDirection()) {
             case 0: // 向上的敌人坦克
             case 2: // 向下的敌人坦克
-                if (s.x > enemyTank.getX() && s.x < enemyTank.getX() + 40 && s.y > enemyTank.getY() && s.y < enemyTank.getY() + 60) {
+                if (s.x > enemyTank.getX()
+                        && s.x < enemyTank.getX() + 40
+                        && s.y > enemyTank.getY()
+                        && s.y < enemyTank.getY() + 60) {
                     s.isLive = false;
                     enemyTank.isLive = false;
                     enemyTanks.remove(enemyTank);
-                    Bomb bomb = new Bomb(enemyTank.getX(), enemyTank.getY());
+                    // 当我方击毁一个敌人坦克时，就对allEnemyTankNum++
+                    // 这里的enemyTank也可能是hero
+                    if(enemyTank instanceof EnemyTank){
+                        Recorder.addAllEnemyTankNum();
+                    }
+                    TankGame05.Bomb bomb = new TankGame05.Bomb(enemyTank.getX(), enemyTank.getY());
                     bombs.add(bomb);
                 }
                 break;
             case 1: // 向右的敌人坦克
             case 3: // 向左的敌人坦克
-                if (s.x > enemyTank.getX() && s.x < enemyTank.getX() + 60 && s.y > enemyTank.getY() && s.y < enemyTank.getY() + 40) {
+                if (s.x > enemyTank.getX()
+                        && s.x < enemyTank.getX() + 60
+                        && s.y > enemyTank.getY()
+                        && s.y < enemyTank.getY() + 40) {
                     s.isLive = false;
                     enemyTank.isLive = false;
                     enemyTanks.remove(enemyTank);
-                    Bomb bomb = new Bomb(enemyTank.getX(), enemyTank.getY());
+                    // 当我方击毁一个敌人坦克时，就对allEnemyTankNum++
+                    // 这里的enemyTank也可能是hero
+                    if(enemyTank instanceof EnemyTank){
+                        Recorder.addAllEnemyTankNum();
+                    }
+                    TankGame05.Bomb bomb = new TankGame05.Bomb(enemyTank.getX(), enemyTank.getY());
                     bombs.add(bomb);
                 }
         }
